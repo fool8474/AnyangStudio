@@ -62,11 +62,15 @@ void onMouse(int event, int x, int y, int flags, void * param) {
 
 	if (event == CV_EVENT_LBUTTONUP) {
 		mouseDowned = false;
+		cout << "Uped" << endl;
+		prevPt = cv::Point(-1, -1);
 	}
 
 	if (mouseDowned) {
 		if (drawCase == CHOOSED_DRAW_BRUSH) {
-			cv::line(image, prevPt, cv::Point(x, y), cv::Scalar(0), 2);
+			if (prevPt.x != -1) {
+				cv::line(image, prevPt, cv::Point(x, y), cv::Scalar(0), 2);
+			}
 			prevPt = cv::Point(x, y);
 		}
 	}
