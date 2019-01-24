@@ -61,13 +61,11 @@ void onMouse(int event, int x, int y, int flags, void * param) {
 		else { // drawing by drawCase
 			switch (drawCase) {
 			case CHOOSED_DRAW_SQUARE:
-				cv::rectangle(image, pt, cv::Point(x, y), cv::Scalar(0), brushSize);
+				drawRectangle(x, y);
 				break;
 
 			case CHOOSED_DRAW_CIRCLE:
-				cv::Point pt2 = pt - cv::Point(x, y);
-				int radius = (int)sqrt(pt2.x * pt2.x + pt2.y * pt2.y);
-				cv::circle(image, pt, radius, cv::Scalar(0), brushSize);
+				drawCircle(x,y);
 				break;
 			}
 			pt = cv::Point(-1, -1);
@@ -79,7 +77,7 @@ void onMouse(int event, int x, int y, int flags, void * param) {
 		prevPt = cv::Point(-1, -1); // for Draw Brush Case :: bugFix brush is Connected
 	}
 
-	if (mouseDowned) {
+	if (mouseDowned) { // Dragged Case
 		if (drawCase == CHOOSED_DRAW_BRUSH) {
 			if (prevPt.x != -1) {
 				cv::line(image, prevPt, cv::Point(x, y), cv::Scalar(0), brushSize);
@@ -91,22 +89,40 @@ void onMouse(int event, int x, int y, int flags, void * param) {
 	if (pt.x != -1) { // When draw activated, dotted figure showed
 		switch (drawCase) {
 		case CHOOSED_DRAW_SQUARE:
-			cv::rectangle(image, pt, prevPt, cv::Scalar(255,255,255), brushSize);
-			cv::rectangle(image, pt, cv::Point(x, y), cv::Scalar(0), brushSize);
-			prevPt = cv::Point(x, y);
+			drawExRectangle(x, y);
 			break;
 
 		case CHOOSED_DRAW_CIRCLE:
-			int radius = (int)sqrt(prevPt.x * prevPt.x + prevPt.y * prevPt.y);
-			cv::circle(image, pt, radius, cv::Scalar(255,255,255), brushSize);
-			cv::Point pt2 = pt - cv::Point(x, y);
-			radius = (int)sqrt(pt2.x * pt2.x + pt2.y * pt2.y);
-			cv::circle(image, pt, radius, cv::Scalar(0), brushSize);
-			prevPt = pt2;
+			drawExCircle(x,y);
 			break;
 		}
 	}
 	cv::imshow(title, image);
+}
+
+void drawExCircle(int x, int y) {
+	int radius = (int)sqrt(prevPt.x * prevPt.x + prevPt.y * prevPt.y);
+	cv::circle(image, pt, radius, cv::Scalar(255, 255, 255), brushSize);
+	cv::Point pt2 = pt - cv::Point(x, y);
+	radius = (int)sqrt(pt2.x * pt2.x + pt2.y * pt2.y);
+	cv::circle(image, pt, radius, cv::Scalar(0), brushSize);
+	prevPt = pt2;
+}
+
+void drawExRectangle(int x, int y) {
+	cv::rectangle(image, pt, prevPt, cv::Scalar(255, 255, 255), brushSize);
+	cv::rectangle(image, pt, cv::Point(x, y), cv::Scalar(0), brushSize);
+	prevPt = cv::Point(x, y);
+}
+
+void drawRectangle(int x, int y) {
+	cv::rectangle(image, pt, cv::Point(x, y), cv::Scalar(0), brushSize);
+}
+
+void drawCircle(int x, int y) {
+	cv::Point pt2 = pt - cv::Point(x, y);
+	int radius = (int)sqrt(pt2.x * pt2.x + pt2.y * pt2.y);
+	cv::circle(image, pt, radius, cv::Scalar(0), brushSize);
 }
 
 void showMenu() {
