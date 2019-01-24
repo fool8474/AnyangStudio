@@ -5,7 +5,8 @@
 
 //others
 #define BASE_CURSOR 48
-
+#define SIZE_DOWN 91
+#define SIZE_UP 93
 
 //draw
 #define DRAW_SQUARE 49
