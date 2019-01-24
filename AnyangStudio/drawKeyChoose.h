@@ -1,0 +1,13 @@
+#define CHOOSED_NOTHING 0
+#define CHOOSED_DRAW_SQUARE 1
+#define CHOOSED_DRAW_CIRCLE 2
+#define CHOOSED_DRAW_BRUSH 3
+
+//others
+#define BASE_CURSOR 48
+
+
+//draw
+#define DRAW_SQUARE 49
+#define DRAW_CIRCLE 50
+#define DRAW_BRUSH 51
