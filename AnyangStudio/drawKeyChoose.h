@@ -12,3 +12,9 @@
 #define DRAW_SQUARE 49
 #define DRAW_CIRCLE 50
 #define DRAW_BRUSH 51
+
+//layer
+#define ADD_LAYER 97
+#define DEL_LAYER 100
+#define NEXT_LAYER 120
+#define PREV_LAYER 122

@@ -1,5 +1,7 @@
 #pragma once
 
+void addNewLayer();
+
 void drawExCircle(int x, int y);
 
 void drawExRectangle(int x, int y);
