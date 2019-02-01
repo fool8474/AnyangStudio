@@ -18,3 +18,4 @@
 #define DEL_LAYER 100
 #define NEXT_LAYER 120
 #define PREV_LAYER 122
+#define SET_LAYER_HIDDEN 104

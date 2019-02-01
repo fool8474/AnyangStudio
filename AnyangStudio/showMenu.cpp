@@ -1,15 +1,20 @@
 #include "pch.h"
 #include "drawKeyChoose.h"
 
-
+#define WIDTH 1280
+#define HEIGHT 960
 
 cv::Mat image;
 cv::Mat selectedLayer;
+cv::Mat selectedCheckLayer;
 cv::Mat copyImage;
+cv::Mat layerCheckMat;
+cv::Mat copyImageBin;
 
-list<cv::Mat> layers;
-list<cv::Mat>::iterator layerIter;
-list<cv::Mat>::iterator circuitIter;
+vector<cv::Mat> layers;
+vector<cv::Mat> layerChecks;
+vector<bool> layerHidden;
+
 string title = "Anyang Studio";
 
 int drawCase = 0;
@@ -50,39 +55,55 @@ void onKeyboard(int typedKey) {
 
 	case DEL_LAYER: // Key d
 		if (layers.size() > 1) {
-			layers.erase(layerIter);
+			cout << "cur Layer is.. " << curLayer << endl;
+			layers.erase(layers.begin() + curLayer);
+			layerChecks.erase(layerChecks.begin() + curLayer);
+			layerHidden.erase(layerHidden.begin() + curLayer);
 			if (curLayer != 0) {
 				curLayer -= 1;
-				--layerIter;
 			}
 		}
+
+		selectedLayer = layers.at(curLayer);
+		selectedCheckLayer = layerChecks.at(curLayer);
+		
 		break;
 
 	case NEXT_LAYER: // Key x
 		if (layers.size() == curLayer + 1) {
-			layerIter = layers.begin();
 			curLayer = 0;
 		}
 
 		else {
-			++layerIter;
 			curLayer++;
 		}
 
-		selectedLayer = *layerIter;
+		selectedLayer = layers.at(curLayer);
+		selectedCheckLayer = layerChecks.at(curLayer);
 
 		break;
 
 	case PREV_LAYER: // Key z
 		if (curLayer == 0) {
-			layerIter = layers.end();
 			curLayer = layers.size() - 1;
 		}
 		else {
-			--layerIter;
 			curLayer--;
 		}
-		selectedLayer = *layerIter;
+		
+		selectedLayer = layers.at(curLayer);
+		selectedCheckLayer = layerChecks.at(curLayer);
+
+		break;
+
+	case SET_LAYER_HIDDEN: // Key h
+		if (layerHidden.at(curLayer)) {
+			layerHidden.at(curLayer) = false;
+		}
+
+		else {
+			layerHidden.at(curLayer) = true;
+		}
 		break;
 
 	case SIZE_UP: // Key ]
@@ -99,29 +120,42 @@ void onKeyboard(int typedKey) {
 
 void addNewLayer() {
 	cv::Mat tempLayer;
+	cv::Mat tempLayerCheck;
 	copyImage.copyTo(tempLayer);
+	copyImageBin.copyTo(tempLayerCheck);
 
-	cout << (void*)tempLayer.data << endl;
 	layers.push_back(tempLayer);
+	layerChecks.push_back(tempLayerCheck);
+	layerHidden.push_back(false);
 	curLayer = layers.size() - 1;
-	layerIter = layers.end();
+	selectedLayer = layers.at(curLayer);
+	selectedCheckLayer = layerChecks.at(curLayer);
 }
 
 void makeShowLayer() {
+	
+	setImageLayerToZero();
 
-	circuitIter = layers.begin();
-	image.zeros(960, 1280, CV_8UC1);
 	for (int i = 0; i < layers.size(); i++) {
-		cv::Mat circuitMat = *circuitIter;
-
-		for (int j = 0; j < circuitMat.rows; j++) {
-			for (int i = 0; i < circuitMat.cols; i++) {
-				if (circuitMat.at<int>(j, i) == 0) {
-					image.at<int>(j, i) = 0;
+		if (!layerHidden.at(i)) {
+		cv::Mat circuitMat = layers.at(i);
+		cv::Mat circuitCheckMat = layerChecks.at(i);
+			for (int j = 0; j < circuitMat.rows; j++) {
+				for (int k = 0; k < circuitMat.cols; k++) {
+					if (!circuitCheckMat.at<bool>(j, k)) {
+						image.at<int>(j, k) = circuitMat.at<int>(j, k);
+					}
 				}
 			}
 		}
-		circuitIter++;
+	}
+}
+
+void setImageLayerToZero() {
+	for (int j = 0; j < image.rows; j++) {
+		for (int i = 0; i < image.cols; i++) {
+			image.at<uchar>(j, i) = 255;
+		}
 	}
 }
 
@@ -158,7 +192,8 @@ void onMouse(int event, int x, int y, int flags, void * param) {
 	if (mouseDowned) { // Dragged Case
 		if (drawCase == CHOOSED_DRAW_BRUSH) {
 			if (prevPt.x != -1) {
-				cv::line(selectedLayer, prevPt, cv::Point(x, y), cv::Scalar(0), brushSize);
+				cv::line(selectedLayer, prevPt, cv::Point(x, y), cv::Scalar(0,0,0), brushSize);
+				cv::line(selectedCheckLayer, prevPt, cv::Point(x, y), true, brushSize);
 			}
 			prevPt = cv::Point(x, y);
 		}
@@ -176,45 +211,57 @@ void onMouse(int event, int x, int y, int flags, void * param) {
 		}
 	}
 
-	makeShowLayer();
 	cv::imshow(title, image);
 }
 
 void drawExCircle(int x, int y) {
 	int radius = (int)sqrt(prevPt.x * prevPt.x + prevPt.y * prevPt.y);
 	cv::circle(selectedLayer, pt, radius, cv::Scalar(255, 255, 255), brushSize);
+	cv::circle(selectedCheckLayer, pt, radius, false, brushSize);
 	cv::Point pt2 = pt - cv::Point(x, y);
 	radius = (int)sqrt(pt2.x * pt2.x + pt2.y * pt2.y);
-	cv::circle(selectedLayer, pt, radius, cv::Scalar(0), brushSize);
+	cv::circle(selectedLayer, pt, radius, cv::Scalar(0,0,0), brushSize);
+	cv::circle(selectedCheckLayer, pt, radius, true, brushSize);
 	prevPt = pt2;
 }
 
 void drawExRectangle(int x, int y) {
 	cv::rectangle(selectedLayer, pt, prevPt, cv::Scalar(255, 255, 255), brushSize);
-	cv::rectangle(selectedLayer, pt, cv::Point(x, y), cv::Scalar(0), brushSize);
+	cv::rectangle(selectedCheckLayer, pt, prevPt, cv::Scalar(false), brushSize);
+	cv::rectangle(selectedLayer, pt, cv::Point(x, y), cv::Scalar(0,0,0), brushSize);
+	cv::rectangle(selectedCheckLayer, pt, cv::Point(x, y), true, brushSize);
 	prevPt = cv::Point(x, y);
 }
 
 void drawRectangle(int x, int y) {
-	cv::rectangle(selectedLayer, pt, cv::Point(x, y), cv::Scalar(0), brushSize);
+	cv::rectangle(selectedLayer, pt, cv::Point(x, y), cv::Scalar(0,0,0), brushSize);
+	cv::rectangle(selectedCheckLayer, pt, cv::Point(x, y), true, brushSize);
 }
 
 void drawCircle(int x, int y) {
 	cv::Point pt2 = pt - cv::Point(x, y);
 	int radius = (int)sqrt(pt2.x * pt2.x + pt2.y * pt2.y);
-	cv::circle(selectedLayer, pt, radius, cv::Scalar(0), brushSize);
+	cv::circle(selectedLayer, pt, radius, cv::Scalar(0,0,0), brushSize);
+	cv::circle(selectedCheckLayer, pt, radius, true, brushSize);
 }
 
 void showMenu() {
-	copyImage = cv::Mat(960, 1280, CV_8UC1, cv::Scalar(255));
+	copyImage = cv::Mat(HEIGHT, WIDTH, CV_8UC3, cv::Scalar(255,255,255));
+	copyImageBin = cv::Mat(HEIGHT, WIDTH, CV_8UC1, cv::Scalar(false));
+	
 	image = copyImage.clone();
 	selectedLayer = copyImage.clone();
+	layerCheckMat = copyImageBin.clone();
 
 	layers.push_back(selectedLayer);
+	layerChecks.push_back(layerCheckMat);
+	layerHidden.push_back(false);
+
 	cv::imshow(title, image);
 	cv::setMouseCallback(title, onMouse, 0);
 
 	while (1) {
+		makeShowLayer();
 		int typedKey = cv::waitKeyEx(100);
 		if (typedKey == 27) break;
 		else {
