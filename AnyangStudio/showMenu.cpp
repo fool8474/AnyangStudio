@@ -1,8 +1,8 @@
 #include "pch.h"
 #include "drawKeyChoose.h"
 
-#define WIDTH 1280
-#define HEIGHT 960
+#define WIDTH 1024
+#define HEIGHT 768
 
 cv::Mat image;
 cv::Mat selectedLayer;
@@ -55,7 +55,6 @@ void onKeyboard(int typedKey) {
 
 	case DEL_LAYER: // Key d
 		if (layers.size() > 1) {
-			cout << "cur Layer is.. " << curLayer << endl;
 			layers.erase(layers.begin() + curLayer);
 			layerChecks.erase(layerChecks.begin() + curLayer);
 			layerHidden.erase(layerHidden.begin() + curLayer);
@@ -121,8 +120,8 @@ void onKeyboard(int typedKey) {
 void addNewLayer() {
 	cv::Mat tempLayer;
 	cv::Mat tempLayerCheck;
-	copyImage.copyTo(tempLayer);
-	copyImageBin.copyTo(tempLayerCheck);
+	tempLayer = copyImage.clone();
+	tempLayerCheck = copyImageBin.clone();
 
 	layers.push_back(tempLayer);
 	layerChecks.push_back(tempLayerCheck);
@@ -142,11 +141,20 @@ void makeShowLayer() {
 		cv::Mat circuitCheckMat = layerChecks.at(i);
 			for (int j = 0; j < circuitMat.rows; j++) {
 				for (int k = 0; k < circuitMat.cols; k++) {
-					if (!circuitCheckMat.at<bool>(j, k)) {
+					if (circuitCheckMat.at<int>(j, k) == 0 ) {
 						image.at<int>(j, k) = circuitMat.at<int>(j, k);
 					}
 				}
 			}
+		}
+	}
+}
+
+void setMatToBlue(cv::Mat mat) {
+	cout << mat.rows << " " << mat.cols << "행렬 크기" << endl;
+	for (int j = 0; j < mat.rows; j++) {
+		for (int i = 0; i < mat.cols; i++) {
+			mat.at<uchar>(j, i) = (150,150,150);
 		}
 	}
 }
@@ -206,7 +214,7 @@ void onMouse(int event, int x, int y, int flags, void * param) {
 			break;
 
 		case CHOOSED_DRAW_CIRCLE:
-			drawExCircle(x,y);
+			drawExCircle(selectedLayer, x,y);
 			break;
 		}
 	}
@@ -214,7 +222,9 @@ void onMouse(int event, int x, int y, int flags, void * param) {
 	cv::imshow(title, image);
 }
 
-void drawExCircle(int x, int y) {
+void drawExCircle(cv::Mat debugMat, int x, int y) {
+	cout << x << " " << y << "원 점선 지워짐" << (void*)debugMat.data << endl;
+	
 	int radius = (int)sqrt(prevPt.x * prevPt.x + prevPt.y * prevPt.y);
 	cv::circle(selectedLayer, pt, radius, cv::Scalar(255, 255, 255), brushSize);
 	cv::circle(selectedCheckLayer, pt, radius, false, brushSize);
